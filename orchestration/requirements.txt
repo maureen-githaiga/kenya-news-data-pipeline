@@ -1,0 +1,8 @@
+kaggle
+google-cloud-storage
+google-cloud-bigquery
+pandas
+langdetect
+textblob
+spacy
+tqdm

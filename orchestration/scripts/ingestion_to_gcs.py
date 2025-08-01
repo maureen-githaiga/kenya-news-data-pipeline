@@ -3,6 +3,8 @@ import os
 from kaggle.api.kaggle_api_extended import KaggleApi
 from google.cloud import storage
 import pandas as pd
+from google.oauth2 import service_account
+
 
 def load_config():
     #load from cli
@@ -45,9 +47,18 @@ def convert_csv_to_parquet(download_dir, dataset_name):
     os.remove(csv_file_path)  
     print(f"Converted {csv_file_path} to {parquet_file_path}.")
 
+
+def get_gcs_client():
+    credentials_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+    if credentials_path and os.path.exists(credentials_path):
+        credentials = service_account.Credentials.from_service_account_file(credentials_path)
+        return storage.Client(credentials=credentials, project=credentials.project_id)
+    else:
+        return storage.Client()
+
 #-------Upload to GCS bucket-------
 def upload_to_gcs(bucket_name, source_dir, destination_folder):
-    client = storage.Client()
+    client = get_gcs_client()
     bucket = client.bucket(bucket_name)
 
     for file_name in os.listdir(source_dir):

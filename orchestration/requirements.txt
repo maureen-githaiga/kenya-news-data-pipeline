@@ -6,4 +6,3 @@ langdetect
 textblob
 spacy
 tqdm
-google.oauth2

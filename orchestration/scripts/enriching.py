@@ -130,8 +130,8 @@ def enrich_news_articles(df: pd.DataFrame, chunk_size):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Enrich news articles with NLP techniques.")
-    parser.add_argument("input_file", type=str,required=True, help="Path to the input Parquet file containing news articles.")
-    parser.add_argument("output_file", type=str, required=True, help="Path to save the enriched Parquet file.")
+    parser.add_argument("--input_file", type=str,required=True, help="Path to the input Parquet file containing news articles.")
+    parser.add_argument("--output_file", type=str, required=True, help="Path to save the enriched Parquet file.")
     args = parser.parse_args()
 
     download_nltk_resource('wordnet')

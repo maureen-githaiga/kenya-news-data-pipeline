@@ -1,0 +1,119 @@
+id: kenya_news_etl_pipeline
+namespace: prod
+
+
+tasks:
+  - id: wdir
+    type: io.kestra.plugin.core.flow.WorkingDirectory
+    tasks:
+      - id: clone_repository
+        type: io.kestra.plugin.git.Clone
+        url: https://github.com/maureen-githaiga/kenya-news-data-pipeline
+        branch: main
+      
+      - id: setup_creds
+        type: io.kestra.plugin.scripts.python.Commands
+        beforeCommands:
+          - |
+            cat > gcp-creds.json << EOF
+            {{ secret("GCP_SERVICE_ACCOUNT") }}
+            EOF
+        env:
+         GOOGLE_APPLICATION_CREDENTIALS: "gcp-creds.json"
+        commands:
+         - echo "GCP credentials setup complete"
+
+      - id: git_ingestion_script
+        type: io.kestra.plugin.scripts.python.Commands
+        description: "Extracts data from kaggle, converts to parquet and uploads the raw data to gcs bucket"
+        containerImage: ghcr.io/kestra-io/pydata:latest
+        beforeCommands:
+          - pip install -r orchestration/requirements.txt > /dev/null
+        env: 
+          KAGGLE_USERNAME: "{{ secret('KAGGLE_USERNAME') }}"
+          KAGGLE_KEY: "{{ secret('KAGGLE_KEY') }}"
+          GOOGLE_APPLICATION_CREDENTIALS: "gcp-creds.json"
+        commands:
+          - python orchestration/scripts/ingestion_to_gcs.py --kaggle_dataset "enockmokua/kenya-news-articles" --download_dir "data" --gcs_bucket_name "kenya-news-bucket" --gcs_destination_folder "raw" --download_dataset_name "final_articles"
+        outputFiles:
+          - "data/*.parquet"
+      
+      - id: sample_raw_data
+        type: io.kestra.plugin.scripts.python.Commands
+        containerImage: ghcr.io/kestra-io/pydata:latest
+        inputFiles: 
+          data/final_articles.parquet: "{{ outputs.git_ingestion_script.outputFiles['data/final_articles.parquet'] }}"       
+        commands:
+          - |
+            python - <<EOF
+            import pandas as pd
+
+            df = pd.read_parquet("data/final_articles.parquet")
+            sample_df = df.sample(n=100)
+            sample_df.to_parquet("data/final_articles_sample.parquet")
+            EOF
+          #INPUT_GCS_URI="gs://kenya-news-bucket/raw/final_articles.parquet"
+       
+        outputFiles:
+          - "data/final_articles_sample.parquet"
+
+      - id: git_enrichment_script
+        type: io.kestra.plugin.scripts.python.Commands
+        description: "Runs enrichment on the raw dataset."
+        containerImage: ghcr.io/kestra-io/pydata:latest
+        beforeCommands:
+          - pip install -r orchestration/requirements.txt > /dev/null
+          - python -m spacy download en_core_web_sm
+
+        commands:
+          - |
+            INPUT_GCS_URI="{{ outputs.sample_raw_data.outputFiles['data/final_articles_sample.parquet']}}"
+            OUTPUT_FILE_PATH="data/enriched_articles.parquet"
+            python orchestration/scripts/enriching.py --input_file "$INPUT_GCS_URI" --output_file "$OUTPUT_FILE_PATH"
+        outputFiles:
+          - "data/enriched_articles.parquet"
+
+      - id: upload_enriched_to_gcs
+        type: io.kestra.plugin.gcp.gcs.Upload
+        description: "Uploads the enriched data to GCS bucket"
+        serviceAccount: "{{ secret('GCP_SERVICE_ACCOUNT') }}"
+        from: "{{ outputs.git_enrichment_script.outputFiles['data/enriched_articles.parquet']}}"
+        to: gs://kenya-news-bucket/processed/enriched_articles.parquet
+        
+
+      - id: load_to_bigquery
+        type: io.kestra.plugin.gcp.bigquery.LoadFromGcs
+        description: "Loads the enriched Parquet data from GCS into BigQuery."
+        serviceAccount: "{{ secret('GCP_SERVICE_ACCOUNT') }}"
+        from: 
+          - "{{ outputs.upload_enriched_to_gcs.uri }}"
+        destinationTable: "{{ kv('GCP_PROJECT_ID') }}.{{ kv('GCP_DATASET') }}.enriched_news_articles"
+        format: PARQUET
+        writeDisposition: WRITE_TRUNCATE
+        createDisposition: CREATE_IF_NEEDED
+      
+  - id: push_flow_to_git
+    type: io.kestra.plugin.git.PushFlows
+    description: "Pushes this flow to git repository for version control."
+    url: https://github.com/maureen-githaiga/kenya-news-data-pipeline
+    gitDirectory: orchestration/flows
+    branch: dev
+    sourceNamespace: dev
+    targetNamespace: prod
+    username: "{{ secret('GITHUB_USERNAME')}}"
+    password: "{{ secret('GITHUB_TOKEN')}}"
+    commitMessage: "add and update etl flows"
+        
+        
+      
+ 
+
+
+
+
+
+
+
+
+      
+

@@ -1,0 +1,82 @@
+version: 2
+
+sources:
+  - name: staging
+    database: deep-rainfall-457106-v3
+    schema: kenya_news_dataset
+
+    tables:
+      - name: enriched_news_articles
+models:
+  - name: stg_news_articles_data.sql
+    description: "Staging model for enriched Kenya news articles with proper types and deduplicated rows"
+    columns:
+      - name: article_id
+        description: "Unique article identifier"
+        tests:
+          - not_null
+          - unique
+      - name: source_id
+        description: "Unique article identifier"
+        tests:
+          - unique
+      - name: author_id
+        description: "Unique article identifier"
+        tests:
+          - unique
+      - name: source
+        description: "News source or outlet"
+        tests:
+          - not_null
+
+      - name: title
+        description: "Title or headline of the article"
+        tests:
+          - not_null
+
+      - name: author
+        description: "Author of the article"
+
+      - name: published_date
+        description: "Date when the article was published"
+        tests:
+          - not_null
+
+      - name: extracted_at
+        description: "Timestamp when the article was extracted from source"
+        tests:
+          - not_null
+
+      - name: language
+        description: "Detected language of the article"
+
+      - name: polarity
+        description: "Sentiment polarity score (-1 negative, +1 positive)"
+        tests:
+          - not_null
+
+      - name: subjectivity
+        description: "Subjectivity score (0 objective, 1 subjective)"
+
+      - name: sentiment_category
+        description: "Categorical sentiment: positive, neutral, negative"
+
+      - name: persons
+        description: "Named entities of type person (comma-separated)"
+
+      - name: organizations
+        description: "Named entities of type organization"
+
+      - name: locations
+        description: "Named entities of type location"
+
+      - name: topic_id
+        description: "Topic cluster ID"
+        tests:
+          - not_null
+
+      - name: topic_keywords
+        description: "Keywords representing the topic cluster"
+
+      - name: topic_label
+        description: "topic label"

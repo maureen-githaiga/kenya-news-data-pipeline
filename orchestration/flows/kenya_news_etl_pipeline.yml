@@ -92,6 +92,13 @@ tasks:
         writeDisposition: WRITE_TRUNCATE
         createDisposition: CREATE_IF_NEEDED
       
+  - id: run_dbt_transformations
+    type: io.kestra.plugin.core.flow.Subflow
+    description: "Run dbt transformations after Extract and Load finishes"
+    flowId: kenya_news_dbt
+    namespace: prod
+    wait: true
+
   - id: push_flow_to_git
     type: io.kestra.plugin.git.PushFlows
     description: "Pushes this flow to git repository for version control."

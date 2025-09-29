@@ -90,7 +90,7 @@ tasks:
     targetNamespace: prod
     username: "{{ secret('GITHUB_USERNAME')}}"
     password: "{{ secret('GITHUB_TOKEN')}}"
-    commitMessage: "add and update etl flows"
+    commitMessage: "updated elt flows"
         
         
       

@@ -8,7 +8,7 @@ sources:
     tables:
       - name: enriched_news_articles
 models:
-  - name: stg_news_articles_data.sql
+  - name: stg_news_articles_data
     description: "Staging model for enriched Kenya news articles with proper types and deduplicated rows"
     columns:
       - name: article_id

@@ -8,8 +8,8 @@ with articlesdata as (
 )
 select
     cast (id as string) as article_id,
-    {{ dbt_utils.generate_surrogate_key(['source']) }} as source_id,
-    {{ dbt_utils.generate_surrogate_key(['author']) }} as author_id,
+    {{ dbt_utils.generate_surrogate_key(["coalesce(source, 'unknown')"]) }} as source_id,
+    {{ dbt_utils.generate_surrogate_key(["coalesce(author, 'unknown')"]) }} as author_id,
     cast (source as string) as source,
     cast (title as string) as article_title,
     cast (author as string) as author,

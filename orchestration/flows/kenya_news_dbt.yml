@@ -19,12 +19,7 @@ tasks:
       url: https://github.com/maureen-githaiga/kenya-news-data-pipeline
       branch: main
       directory: kenya-news-data-pipeline
-    # --- TEMP DEBUG TASK ---
-    - id: debug_path
-      type: io.kestra.plugin.scripts.shell.Commands
-      commands:
-        - ls -R
-
+      
     - id: dbt-build
       type: io.kestra.plugin.dbt.cli.DbtCLI
       env:

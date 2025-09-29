@@ -37,25 +37,6 @@ tasks:
           - python orchestration/scripts/ingestion_to_gcs.py --kaggle_dataset "enockmokua/kenya-news-articles" --download_dir "data" --gcs_bucket_name "kenya-news-bucket" --gcs_destination_folder "raw" --download_dataset_name "final_articles"
         outputFiles:
           - "data/*.parquet"
-      
-      - id: sample_raw_data
-        type: io.kestra.plugin.scripts.python.Commands
-        containerImage: ghcr.io/kestra-io/pydata:latest
-        inputFiles: 
-          data/final_articles.parquet: "{{ outputs.git_ingestion_script.outputFiles['data/final_articles.parquet'] }}"       
-        commands:
-          - |
-            python - <<EOF
-            import pandas as pd
-
-            df = pd.read_parquet("data/final_articles.parquet")
-            sample_df = df.sample(n=100)
-            sample_df.to_parquet("data/final_articles_sample.parquet")
-            EOF
-          #INPUT_GCS_URI="gs://kenya-news-bucket/raw/final_articles.parquet"
-       
-        outputFiles:
-          - "data/final_articles_sample.parquet"
 
       - id: git_enrichment_script
         type: io.kestra.plugin.scripts.python.Commands
@@ -67,7 +48,7 @@ tasks:
 
         commands:
           - |
-            INPUT_GCS_URI="{{ outputs.sample_raw_data.outputFiles['data/final_articles_sample.parquet']}}"
+            INPUT_GCS_URI="gs://kenya-news-bucket/raw/final_articles.parquet"
             OUTPUT_FILE_PATH="data/enriched_articles.parquet"
             python orchestration/scripts/enriching.py --input_file "$INPUT_GCS_URI" --output_file "$OUTPUT_FILE_PATH"
         outputFiles:

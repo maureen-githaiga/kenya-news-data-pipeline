@@ -1,0 +1,62 @@
+id: kenya_news_dbt
+namespace: prod
+
+inputs:
+  - id: dbt_command
+    type: SELECT
+    allowCustomValue: true
+    defaults: dbt build
+    values:
+      - dbt build
+      - dbt debug
+
+tasks:
+  - id: dbt
+    type: io.kestra.plugin.core.flow.WorkingDirectory
+    tasks:
+    - id: clone_repository
+      type: io.kestra.plugin.git.Clone
+      url: https://github.com/maureen-githaiga/kenya-news-data-pipeline
+      branch: main
+      directory: kenya-news-data-pipeline
+      
+    - id: dbt-build
+      type: io.kestra.plugin.dbt.cli.DbtCLI
+      env:
+        DBT_DATABASE: "{{kv('GCP_PROJECT_ID')}}"
+        DBT_SCHEMA: "{{kv('GCP_DATASET')}}"
+      containerImage: ghcr.io/kestra-io/dbt-bigquery:latest
+      taskRunner:
+        type: io.kestra.plugin.scripts.runner.docker.Docker
+      inputFiles:
+        sa.json: "{{kv('GCP_CREDS')}}"
+      commands:
+        - dbt deps --project-dir ./kenya-news-data-pipeline/dbt --target dev
+        - "{{ inputs.dbt_command }} --project-dir ./kenya-news-data-pipeline/dbt --target dev" 
+      projectDir: ./kenya-news-data-pipeline/dbt 
+      storeManifest:
+        key: manifest.json
+        namespace: "{{ flow.namespace }}"
+      profiles: |
+        default:
+          outputs:
+            dev:
+              type: bigquery
+              dataset: "{{kv('GCP_DATASET')}}"
+              project: "{{kv('GCP_PROJECT_ID')}}"
+              location: "EU"
+              keyfile: sa.json
+              method: service-account
+              priority: interactive
+              threads: 16
+              timeout_seconds: 300
+              fixed_retries: 1
+          target: dev
+    description: |
+      sources:
+        - name: staging
+          database: "{{kv('GCP_PROJECT_ID')}}"
+          schema: "{{kv('GCP_DATASET')}}"
+          table: enriched_news_articles
+
+      ```

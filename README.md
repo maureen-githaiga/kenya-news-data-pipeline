@@ -14,16 +14,13 @@ The project uses a [Kaggle dataset](https://www.kaggle.com/datasets/enockmokua/k
 Each record contains the article’s title, publication date, author, source and content.
 
 ## Tools
-- **Python scripts** – For data ingestion, processing, and NLP enrichment. 
-- **Terraform** – For resource provisioning in GCP.  
-- **Google Cloud Platform (GCP)** – Cloud infrastructure:  
-  - **VM Instance** – To run the project.  
-  - **Google Cloud Storage (GCS)** – For storing raw data files.
-  - **BigQuery** – Cloud data warehouse for storing and querying structured datasets.
+- **Python** – Used for data ingestion, processing, and NLP enrichment. 
+- **Terraform** – Defines and provisions all GCP and cloud infrastructure resources.  
+- **Google Cloud Platform (GCP)** – Provides cloud services: BigQuery (Data Warehouse), Cloud Storage (GCS) (Data Lake), and IAM.  
 - **dbt (Data Build Tool)** – For transforming and modelling data into a Star Schema.
-- **Kestra** – Orchestration tool for the ELT workflow.
-- **Docker** – To run the Kestra and Metabase containers.
-- **Metabase** – For creating a dashboard for visualisation.
+- **Kestra** – Workflow orchestration.
+- **Docker** –  Containerization platform for orchestrator (Kestra) and visualisation (Metabase).
+- **Metabase** – Dashboard.
 
 ## Architecture
 ![Kenya News Data Pipeline Architecture](https://github.com/maureen-githaiga/kenya-news-data-pipeline/blob/main/architecture(1).png)
